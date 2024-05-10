@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<project basedir="." default="help">
+
+	<property name="rootdir" value="${project.basedir}/" override="true" />
+	<property name="bindir" value="${rootdir}vendor/bin/" override="false" />
+
+	<target name="help" description="Shows available targets">
+		<exec executable="${bindir}phing" passthru="true">
+			<arg value="-f" />
+			<arg value="${phing.file}" />
+			<arg value="-l" />
+		</exec>
+	</target>
+
+	<target name="build" depends="prepare,lint,phpunit,phpcs" description="Builds project for Jenkins" />
+
+	<target name="prepare" depends="clean">
+		<mkdir dir="${rootdir}build/coverage/" />
+		<mkdir dir="${rootdir}build/logs/" />
+	</target>
+
+	<target name="clean">
+		<if>
+			<available file="${rootdir}build/" type="dir" />
+			<then>
+				<delete dir="${rootdir}build/" />
+			</then>
+		</if>
+	</target>
+
+	<target name="lint" description="Performs syntax check of sourcecode files">
+		<phplint haltonfailure="true">
+			<fileset dir="${rootdir}">
+				<include name="src/" />
+				<include name="bin/" />
+				<include name="tests/unit/**/*.php" />
+			</fileset>
+		</phplint>
+	</target>
+
+	<target name="phpunit">
+		<exec executable="${bindir}phpunit" logoutput="true" passthru="true">
+			<arg line="-c ${rootdir}phpunit.xml" />
+			<arg line="--log-junit ${rootdir}build/logs/junit.xml" />
+			<arg line="--coverage-clover ${rootdir}build/logs/clover.xml" />
+			<arg line="--coverage-html ${rootdir}build/coverage/" />
+			<arg line="--coverage-crap4j ${rootdir}build/logs/crap4j.xml" />
+		</exec>
+	</target>
+
+	<target name="phpcs">
+		<exec executable="${bindir}phpcs" escape="false" logoutput="true" passthru="true">
+			<arg line="-p" />
+			<arg line="--report=checkstyle" />
+			<arg line="--report-file=${rootdir}build/logs/checkstyle.xml" />
+		</exec>
+	</target>
+
+</project>
